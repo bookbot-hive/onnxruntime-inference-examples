@@ -5,7 +5,6 @@
 
 // C++ headers
 #include <iostream>
-#include <sstream>
 
 // AudioFile headers
 // #include "AudioFile.hpp"
@@ -30,21 +29,13 @@
 //     File.save(Filename, AudioFileFormat::Wave);
 // }
 
-std::string print_shape(const std::vector<int64_t>& v) {
-  std::stringstream ss("");
-  for (size_t i = 0; i < v.size() - 1; i++)
-    ss << v[i] << "x";
-  ss << v[v.size() - 1];
-  return ss.str();
-}
-
 using namespace std;
 
 int main()
 {   
     const char* model_path = "/root/lightspeech-mfa-en-v6/lightspeech_quant.onnx";
 
-    Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "example-model-explorer");
+    Ort::Env env;
     Ort::SessionOptions session_options;
     Ort::Session session = Ort::Session(env, model_path, session_options);  // access experimental components via the Experimental namespace
 
@@ -83,17 +74,12 @@ int main()
     const char* input_names[] = {"input_ids", "speaker_ids", "speed_ratios", "f0_ratios", "energy_ratios"};
     const char* output_names[] = {"Identity", "Identity_1", "Identity_2"};
 
-    std::vector<std::reference_wrapper<Ort::Value>> input_tensors = { input_ids_tensor, speaker_ids_tensor, speed_ratios_tensor, f0_ratios_tensor, energy_ratios_tensor };
-
-    std::vector<const Ort::Value*> inputPointers;
-    for (const auto& inputValue : input_tensors) {
-        inputPointers.push_back(&inputValue.get());
-    }
+    auto input_tensors = { input_ids_tensor, speaker_ids_tensor, speed_ratios_tensor, f0_ratios_tensor, energy_ratios_tensor };
 
     // run inference
     Ort::RunOptions run_options;
     // infer; LightSpeech returns 3 outputs: (mel, duration, pitch)
-    std::vector<Ort::Value> outputs = session.Run(run_options, input_names, inputPointers.data(), (size_t)5, output_names, (size_t)3);
+    std::vector<Ort::Value> outputs = session.Run(run_options, input_names, input_tensors, (size_t)5, output_names, (size_t)3);
     // NOTE: FastSpeech2 returns >3 outputs!
 
     // TFTensor<float> mel_spec = CopyTensor<float>(outputs[0]);
