@@ -47,7 +47,7 @@ int main()
     std::vector<float> energy_ratios = {1.f};
     std::vector<float> f0_ratios = {1.f};
     // TODO: change speaker index here
-    std::vector<int32_t> speaker_ids = {2};
+    std::vector<int32_t> speaker_ids = {0};
     std::vector<float> speed_ratios = {1.f};
 
     // This is the shape of the inputs, our equivalent to tf.expand_dims.
@@ -74,7 +74,16 @@ int main()
     std::vector<Ort::Value> outputs = lightspeech.Run(run_options, input_names, input_tensors.data(), (size_t)5, output_names, (size_t)3);
     // NOTE: FastSpeech2 returns >3 outputs!
 
-    // TODO: get durations for visemes
+    // get durations for visemes
+    int32_t* durations_tensor_ptr = outputs[1].GetTensorMutableData<int32_t>();
+    // use output shape to iterate through pointer later!
+    auto outputs_durations_info = outputs[1].GetTensorTypeAndShapeInfo();
+    size_t total_durations_len = outputs_durations_info.GetElementCount();
+    // copy durations to an int vector for visemes
+    std::vector<int32_t> durations_tensor_vector;
+    for (size_t i = 0; i != total_durations_len; ++i) {
+      durations_tensor_vector.push_back(durations_tensor_ptr[i]);
+    }
 
     const char* input_names_melgan[] = {"mels"};
     const char* output_names_melgan[] = {"Identity"};
@@ -84,9 +93,9 @@ int main()
     
     // NOTE: all ONNX outputs are pointers!
     // Get pointer to output tensor float values
-    float* audio_tensor_ptr = outputs_melgan.front().GetTensorMutableData<float>();
+    float* audio_tensor_ptr = outputs_melgan[0].GetTensorMutableData<float>();
     // use output shape to iterate through pointer later!
-    auto outputs_melgan_info = outputs_melgan.front().GetTensorTypeAndShapeInfo();
+    auto outputs_melgan_info = outputs_melgan[0].GetTensorTypeAndShapeInfo();
     size_t total_audio_len = outputs_melgan_info.GetElementCount();
 
     // copy floats to a float vector for export
