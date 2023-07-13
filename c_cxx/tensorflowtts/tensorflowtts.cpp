@@ -29,8 +29,6 @@
 //     File.save(Filename, AudioFileFormat::Wave);
 // }
 
-using namespace std;
-
 int main()
 {   
     const char* model_path = "/root/lightspeech-mfa-en-v6/lightspeech_quant.onnx";
@@ -55,32 +53,26 @@ int main()
 
     auto memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);   
 
-    // std::vector<Ort::Value> input_tensors;
-    // input_tensors.push_back(Ort::Value::CreateTensor<int32_t>(memory_info, input_ids.data(), input_ids.size(), input_ids_shape.data(), input_ids_shape.size()));
-    // input_tensors.push_back(Ort::Value::CreateTensor<int32_t>(memory_info, speaker_ids.data(), speaker_ids.size(), speaker_ids_shape.data(), speaker_ids_shape.size()));
-    // input_tensors.push_back(Ort::Value::CreateTensor<float>(memory_info, speed_ratios.data(), speed_ratios.size(), speed_ratios_shape.data(), speed_ratios_shape.size()));
-    // input_tensors.push_back(Ort::Value::CreateTensor<float>(memory_info, f0_ratios.data(), f0_ratios.size(), f0_ratios_shape.data(), f0_ratios_shape.size()));
-    // input_tensors.push_back(Ort::Value::CreateTensor<float>(memory_info, energy_ratios.data(), energy_ratios.size(), energy_ratios_shape.data(), energy_ratios_shape.size()));
-
-    // Define the tensors
-    // Ort::Value {variable_name} = Ort::Value::CreateTensor<dtype>(memory_info, input_image_.data(), input_image_.size(), input_shape_.data(), input_shape_.size());
-    Ort::Value input_ids_tensor = Ort::Value::CreateTensor<int32_t>(memory_info, input_ids.data(), input_ids.size(), input_ids_shape.data(), input_ids_shape.size());
-    // TODO: change speaker index here
-    Ort::Value speaker_ids_tensor = Ort::Value::CreateTensor<int32_t>(memory_info, speaker_ids.data(), speaker_ids.size(), speaker_ids_shape.data(), speaker_ids_shape.size());
-    Ort::Value speed_ratios_tensor = Ort::Value::CreateTensor<float>(memory_info, speed_ratios.data(), speed_ratios.size(), speed_ratios_shape.data(), speed_ratios_shape.size());
-    Ort::Value f0_ratios_tensor = Ort::Value::CreateTensor<float>(memory_info, f0_ratios.data(), f0_ratios.size(), f0_ratios_shape.data(), f0_ratios_shape.size());
-    Ort::Value energy_ratios_tensor = Ort::Value::CreateTensor<float>(memory_info, energy_ratios.data(), energy_ratios.size(), energy_ratios_shape.data(), energy_ratios_shape.size());
-
     const char* input_names[] = {"input_ids", "speaker_ids", "speed_ratios", "f0_ratios", "energy_ratios"};
     const char* output_names[] = {"Identity", "Identity_1", "Identity_2"};
 
-    auto input_tensors = { input_ids_tensor, speaker_ids_tensor, speed_ratios_tensor, f0_ratios_tensor, energy_ratios_tensor };
+    // create an array of ORT values
+    std::vector<Ort::Value> input_tensors;
+    // NOTE: Cannot pre-define the tensors in a separate variable, might cause pointer issues!
+    input_tensors.emplace_back(Ort::Value::CreateTensor<int32_t>(memory_info, input_ids.data(), input_ids.size(), input_ids_shape.data(), input_ids_shape.size()));
+    // TODO: change speaker index here
+    input_tensors.emplace_back(Ort::Value::CreateTensor<int32_t>(memory_info, speaker_ids.data(), speaker_ids.size(), speaker_ids_shape.data(), speaker_ids_shape.size()));
+    input_tensors.emplace_back(Ort::Value::CreateTensor<float>(memory_info, speed_ratios.data(), speed_ratios.size(), speed_ratios_shape.data(), speed_ratios_shape.size()));
+    input_tensors.emplace_back(Ort::Value::CreateTensor<float>(memory_info, f0_ratios.data(), f0_ratios.size(), f0_ratios_shape.data(), f0_ratios_shape.size()));
+    input_tensors.emplace_back(Ort::Value::CreateTensor<float>(memory_info, energy_ratios.data(), energy_ratios.size(), energy_ratios_shape.data(), energy_ratios_shape.size()));
 
     // run inference
     Ort::RunOptions run_options;
     // infer; LightSpeech returns 3 outputs: (mel, duration, pitch)
-    std::vector<Ort::Value> outputs = session.Run(run_options, input_names, input_tensors, (size_t)5, output_names, (size_t)3);
+    std::vector<Ort::Value> outputs = session.Run(run_options, input_names, input_tensors.data(), (size_t)5, output_names, (size_t)3);
     // NOTE: FastSpeech2 returns >3 outputs!
+
+    // std::cout << outputs[0].GetTensorTypeAndShapeInfo().GetShape() << std::endl;
 
     // TFTensor<float> mel_spec = CopyTensor<float>(outputs[0]);
     // TFTensor<int32_t> durations = CopyTensor<int32_t>(outputs[1]);
