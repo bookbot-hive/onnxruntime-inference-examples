@@ -1,7 +1,6 @@
 package com.example.speechsynthesis
 
 import ai.onnxruntime.*
-import ai.onnxruntime.extensions.OrtxPackage
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioManager
@@ -17,7 +16,9 @@ import kotlin.math.min
 
 class MainActivity : AppCompatActivity() {
     private var ortEnv: OrtEnvironment = OrtEnvironment.getEnvironment()
-    private lateinit var ortSession: OrtSession
+    private var sessionOptions: OrtSession.SessionOptions = OrtSession.SessionOptions()
+    private lateinit var lightspeech: OrtSession
+    private lateinit var mbmelgan: OrtSession
     private var resultText : TextView? = null
     private var inferenceButton: Button? = null
 
@@ -28,16 +29,15 @@ class MainActivity : AppCompatActivity() {
         inferenceButton = findViewById(R.id.inference_button)
         resultText = findViewById(R.id.result_text)
 
-        // Initialize Ort Session and register the onnxruntime extensions package that contains the custom operators.
-        // Note: These are used to decode the input image into the format the original model requires,
-        // and to encode the model output into png format
-        val sessionOptions: OrtSession.SessionOptions = OrtSession.SessionOptions()
-        sessionOptions.registerCustomOpLibrary(OrtxPackage.getLibraryPath())
-        ortSession = ortEnv.createSession(readModel(), sessionOptions)
+        // initialize sessions / load models
+        val lightspeechPath = resources.openRawResource(R.raw.lightspeech_quant).readBytes()
+        val mbmelganPath = resources.openRawResource(R.raw.mbmelgan).readBytes()
+        lightspeech = ortEnv.createSession(lightspeechPath, sessionOptions)
+        mbmelgan = ortEnv.createSession(mbmelganPath, sessionOptions)
 
         inferenceButton?.setOnClickListener {
             try {
-                performInference(ortSession)
+                performInference(lightspeech, mbmelgan)
                 Toast.makeText(baseContext, "Inference Successful!", Toast.LENGTH_SHORT)
                     .show()
             } catch (e: Exception) {
@@ -48,19 +48,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun performInference(ortSession: OrtSession) {
-        var jets = JETS()
-        var results = jets.infer(ortEnv, ortSession)
+    private fun performInference(lightspeechSession: OrtSession, mbmelganSession: OrtSession) {
+        val start = System.nanoTime()
 
-        var durations = results.durations
-        var inferenceTime = results.inferenceTime
-        val outputText = "Inference time: $inferenceTime ms\nDurations: $durations"
+        val lightspeech = LightSpeech()
+        val mbmelgan = MBMelGAN()
+
+        // infer; LightSpeech returns 3 outputs: (mel, duration, pitch)
+        val lightspeechResults = lightspeech.infer(ortEnv, lightspeechSession)
+        // NOTE: FastSpeech2 returns >3 outputs!
+
+        // NOTE: this is durations for visemes!
+        val durations = lightspeechResults.durations[0]
+
+        // infer melgan
+        val mels = lightspeechResults.mels
+        val mbmelganResults = mbmelgan.infer(ortEnv, mbmelganSession, mels)
+
+        var durationString = ""
+        for (i in durations) {
+            durationString += i
+            durationString += " "
+        }
+
+        val inferenceTime = ((System.nanoTime() - start) / 1_000_000).toString()
+        val outputText = "Inference time: $inferenceTime ms\nDurations: $durationString"
         resultText?.setText(outputText)
 
-        var audio = results.audio
+        val audio = mbmelganResults.audio[0].flatMap { it.asIterable() }.toFloatArray()
 
         val bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL, FORMAT)
-        val audioTrack: AudioTrack = AudioTrack(
+        val audioTrack = AudioTrack(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -87,23 +105,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun readModel(): ByteArray {
-        val modelID = R.raw.model
-        return resources.openRawResource(modelID).readBytes()
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         ortEnv.close()
-        ortSession.close()
+        lightspeech.close()
+        mbmelgan.close()
     }
 
     companion object {
         private const val TAG = "ORTSuperResolution"
-        private const val SAMPLE_RATE = 22050
+        private const val SAMPLE_RATE = 44100
         private const val FORMAT = AudioFormat.ENCODING_PCM_FLOAT
         private const val CHANNEL = AudioFormat.CHANNEL_OUT_MONO
-
     }
 
 }
