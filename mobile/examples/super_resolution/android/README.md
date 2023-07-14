@@ -20,13 +20,13 @@ The model used here is from source: [Pytorch Super Resolution](https://pytorch.o
 
 Clone this repository to get the sample application. Then open the project under folder `mobile\examples\super_resolution\android`.
 
-
 ### Step 2: Prepare the model and required packages
 
 - The required aar package is under lib's folder `mobile\examples\super_resolution\android\app\libs`.
 - The model used is under `mobile\examples\super_resolution\android\app\src\main\res\raw`.
 
-Note: When update to pre-release/release version ort-extensions android package, it will no longer consume a local AAR package that's included in this repo.
+Note: When update to pre-release/release version ort-extensions android package, it will no longer consu
+me a local AAR package that's included in this repo.
 
 
 ### Step 3: Connect Android Device and Run the app
