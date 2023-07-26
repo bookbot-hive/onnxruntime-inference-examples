@@ -67,34 +67,34 @@ class MainActivity : AppCompatActivity() {
         val outputText = "Inference time: $inferenceTime ms\nDurations: $durationString"
         resultText?.setText(outputText)
 
-        // val audio = vitsResults.audio[0].flatMap { it.asIterable() }.toFloatArray()
+        val audio = vitsResults.audio[0][0]
 
-        // val bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL, FORMAT)
-        // val audioTrack = AudioTrack(
-        //     AudioAttributes.Builder()
-        //         .setUsage(AudioAttributes.USAGE_MEDIA)
-        //         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-        //         .build(),
-        //     AudioFormat.Builder()
-        //         .setSampleRate(SAMPLE_RATE)
-        //         .setEncoding(FORMAT)
-        //         .setChannelMask(CHANNEL)
-        //         .build(),
-        //     bufferSize,
-        //     AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE
-        // )
-        // var index = 0
-        // audioTrack.play()
-        // while (index < audio.size) {
-        //     val buffer = min(bufferSize, audio.size - index)
-        //     audioTrack.write(
-        //         audio,
-        //         index,
-        //         buffer,
-        //         AudioTrack.WRITE_BLOCKING
-        //     )
-        //     index += bufferSize
-        // }
+        val bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL, FORMAT)
+        val audioTrack = AudioTrack(
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build(),
+            AudioFormat.Builder()
+                .setSampleRate(SAMPLE_RATE)
+                .setEncoding(FORMAT)
+                .setChannelMask(CHANNEL)
+                .build(),
+            bufferSize,
+            AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE
+        )
+        var index = 0
+        audioTrack.play()
+        while (index < audio.size) {
+            val buffer = min(bufferSize, audio.size - index)
+            audioTrack.write(
+                audio,
+                index,
+                buffer,
+                AudioTrack.WRITE_BLOCKING
+            )
+            index += bufferSize
+        }
     }
 
     override fun onDestroy() {

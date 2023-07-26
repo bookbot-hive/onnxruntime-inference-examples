@@ -24,7 +24,7 @@ internal class VITS(
         val lengthScale = floatArrayOf(1.0F)
         val noiseScaleW = floatArrayOf(0.8F)
         // TODO: change speaker index here
-        val speakerID = null
+        // val speakerID = null
 
         // this is the shape of the inputs, our equivalent to tf.expand_dims.
         val inputShape = longArrayOf(1, input.size.toLong())
@@ -32,9 +32,10 @@ internal class VITS(
         val noiseScaleShape = longArrayOf(1)
         val lengthScaleShape = longArrayOf(1)
         val noiseScaleWShape = longArrayOf(1)
-        val speakerIDShape = longArrayOf(1)
+        // val speakerIDShape = longArrayOf(1)
 
-        val inputNames = arrayOf("input", "input_lengths", "noise_scale", "length_scale", "noise_scale_w", "speaker_id")
+        // val inputNames = arrayOf("input", "input_lengths", "noise_scale", "length_scale", "noise_scale_w", "speaker_id")
+        val inputNames = arrayOf("input", "input_lengths", "noise_scale", "length_scale", "noise_scale_w")
 
         // create input tensors from raw vectors
         val inputTensor = OnnxTensor.createTensor(ortEnv, LongBuffer.wrap(input), inputShape)
@@ -42,9 +43,10 @@ internal class VITS(
         val noiseScaleTensor = OnnxTensor.createTensor(ortEnv, FloatBuffer.wrap(noiseScale), noiseScaleShape)
         val lengthScaleTensor = OnnxTensor.createTensor(ortEnv, FloatBuffer.wrap(lengthScale), lengthScaleShape)
         val noiseScaleWTensor = OnnxTensor.createTensor(ortEnv, FloatBuffer.wrap(noiseScaleW), noiseScaleWShape)
-        val speakerIDTensor = OnnxTensor.createTensor(ortEnv, FloatBuffer.wrap(speakerID), speakerIDShape)
+        // val speakerIDTensor = OnnxTensor.createTensor(ortEnv, FloatBuffer.wrap(speakerID), speakerIDShape)
 
-        val inputTensorsVector = arrayOf(inputTensor, inputLengthTensor, noiseScaleTensor, lengthScaleTensor, noiseScaleWTensor, speakerIDTensor)
+        // val inputTensorsVector = arrayOf(inputTensor, inputLengthTensor, noiseScaleTensor, lengthScaleTensor, noiseScaleWTensor, speakerIDTensor)
+        val inputTensorsVector = arrayOf(inputTensor, inputLengthTensor, noiseScaleTensor, lengthScaleTensor, noiseScaleWTensor)
 
         // create input name -> input tensor map
         val inputTensors: Map<String, OnnxTensor> = inputNames.zip(inputTensorsVector).toMap()
