@@ -100,8 +100,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         ortEnv.close()
-        lightspeech.close()
-        mbmelgan.close()
+        vits.close()
     }
 
     companion object {
