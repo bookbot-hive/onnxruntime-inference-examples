@@ -11,6 +11,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.io.File
 import kotlin.math.min
 
 
@@ -29,8 +30,13 @@ class MainActivity : AppCompatActivity() {
         resultText = findViewById(R.id.result_text)
 
         // initialize sessions / load models
-        val vitsPath = resources.openRawResource(R.raw.vits).readBytes()
-        vits = ortEnv.createSession(vitsPath, sessionOptions)
+        val modelFile = File(filesDir, "vits.onnx")
+        assets.open("vits.onnx").use { input ->
+            modelFile.outputStream().use { output ->
+                input.copyTo(output, 1024)
+            }
+        }
+        vits = ortEnv.createSession(modelFile.absolutePath, sessionOptions)
 
         inferenceButton?.setOnClickListener {
             try {
