@@ -55,13 +55,13 @@ class MainActivity : AppCompatActivity() {
         // NOTE: FastSpeech2 returns >3 outputs!
 
         // NOTE: this is durations for visemes!
-        // val durations = lightspeechResults.durations[0]
+        val durations = vitsResults.durations
 
          var durationString = ""
-        // for (i in durations) {
-        //     durationString += i
-        //     durationString += " "
-        // }
+        for (i in durations) {
+            durationString += i
+            durationString += " "
+        }
 
         val inferenceTime = ((System.nanoTime() - start) / 1_000_000).toString()
         val outputText = "Inference time: $inferenceTime ms\nDurations: $durationString"

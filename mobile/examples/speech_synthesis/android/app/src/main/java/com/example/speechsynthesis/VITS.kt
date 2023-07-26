@@ -8,12 +8,29 @@ import java.nio.LongBuffer
 
 
 internal data class VITSResult(
-    var audio: Array<Array<FloatArray>>
+    var audio: Array<Array<FloatArray>>,
+    var durations: FloatArray
 ) {}
 
 
 internal class VITS(
 ) {
+    fun sumVertically(array: Array<FloatArray>): FloatArray {
+        val numRows = array.size
+        val numCols = array[0].size
+
+        val sumArray = FloatArray(numCols)
+
+        for (col in 0 until numCols) {
+            var sum = 0.0f
+            for (row in 0 until numRows) {
+                sum += array[row][col]
+            }
+            sumArray[col] = sum
+        }
+
+        return sumArray
+    }
 
     fun infer(ortEnv: OrtEnvironment, ortSession: OrtSession): VITSResult {
         val result: VITSResult
@@ -53,9 +70,12 @@ internal class VITS(
 
         val output = ortSession.run(inputTensors)
         output.use {
-            val audio = (output?.get(0)?.value) as Array<Array<FloatArray>>
+            val audio = (output?.get(0)?.value) as Array<Array<FloatArray>> // (1, frames) => (1, acousticFrames * hopLength)
+            val attention = (output?.get(1)?.value) as Array<Array<Array<FloatArray>>> // (1, 1, acousticFrames, inputLength)
 
-            result = VITSResult(audio)
+            val durations = sumVertically(attention[0][0])
+
+            result = VITSResult(audio, durations)
         }
         return result
     }
