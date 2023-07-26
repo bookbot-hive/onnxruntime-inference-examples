@@ -17,8 +17,7 @@ import kotlin.math.min
 class MainActivity : AppCompatActivity() {
     private var ortEnv: OrtEnvironment = OrtEnvironment.getEnvironment()
     private var sessionOptions: OrtSession.SessionOptions = OrtSession.SessionOptions()
-    private lateinit var lightspeech: OrtSession
-    private lateinit var mbmelgan: OrtSession
+    private lateinit var vits: OrtSession
     private var resultText : TextView? = null
     private var inferenceButton: Button? = null
 
@@ -30,10 +29,8 @@ class MainActivity : AppCompatActivity() {
         resultText = findViewById(R.id.result_text)
 
         // initialize sessions / load models
-        val lightspeechPath = resources.openRawResource(R.raw.lightspeech_quant).readBytes()
-        val mbmelganPath = resources.openRawResource(R.raw.mbmelgan).readBytes()
-        lightspeech = ortEnv.createSession(lightspeechPath, sessionOptions)
-        mbmelgan = ortEnv.createSession(mbmelganPath, sessionOptions)
+        val vitsPath = resources.openRawResource(R.raw.vits).readBytes()
+        vits = ortEnv.createSession(vitsPath, sessionOptions)
 
         inferenceButton?.setOnClickListener {
             try {
@@ -51,58 +48,53 @@ class MainActivity : AppCompatActivity() {
     private fun performInference(lightspeechSession: OrtSession, mbmelganSession: OrtSession) {
         val start = System.nanoTime()
 
-        val lightspeech = LightSpeech()
-        val mbmelgan = MBMelGAN()
+        val vits = VITS()
 
         // infer; LightSpeech returns 3 outputs: (mel, duration, pitch)
-        val lightspeechResults = lightspeech.infer(ortEnv, lightspeechSession)
+        val vitsResults = vits.infer(ortEnv, lightspeechSession)
         // NOTE: FastSpeech2 returns >3 outputs!
 
         // NOTE: this is durations for visemes!
-        val durations = lightspeechResults.durations[0]
+        // val durations = lightspeechResults.durations[0]
 
-        // infer melgan
-        val mels = lightspeechResults.mels
-        val mbmelganResults = mbmelgan.infer(ortEnv, mbmelganSession, mels)
-
-        var durationString = ""
-        for (i in durations) {
-            durationString += i
-            durationString += " "
-        }
+         var durationString = ""
+        // for (i in durations) {
+        //     durationString += i
+        //     durationString += " "
+        // }
 
         val inferenceTime = ((System.nanoTime() - start) / 1_000_000).toString()
         val outputText = "Inference time: $inferenceTime ms\nDurations: $durationString"
         resultText?.setText(outputText)
 
-        val audio = mbmelganResults.audio[0].flatMap { it.asIterable() }.toFloatArray()
+        // val audio = vitsResults.audio[0].flatMap { it.asIterable() }.toFloatArray()
 
-        val bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL, FORMAT)
-        val audioTrack = AudioTrack(
-            AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build(),
-            AudioFormat.Builder()
-                .setSampleRate(SAMPLE_RATE)
-                .setEncoding(FORMAT)
-                .setChannelMask(CHANNEL)
-                .build(),
-            bufferSize,
-            AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE
-        )
-        var index = 0
-        audioTrack.play()
-        while (index < audio.size) {
-            val buffer = min(bufferSize, audio.size - index)
-            audioTrack.write(
-                audio,
-                index,
-                buffer,
-                AudioTrack.WRITE_BLOCKING
-            )
-            index += bufferSize
-        }
+        // val bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL, FORMAT)
+        // val audioTrack = AudioTrack(
+        //     AudioAttributes.Builder()
+        //         .setUsage(AudioAttributes.USAGE_MEDIA)
+        //         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+        //         .build(),
+        //     AudioFormat.Builder()
+        //         .setSampleRate(SAMPLE_RATE)
+        //         .setEncoding(FORMAT)
+        //         .setChannelMask(CHANNEL)
+        //         .build(),
+        //     bufferSize,
+        //     AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE
+        // )
+        // var index = 0
+        // audioTrack.play()
+        // while (index < audio.size) {
+        //     val buffer = min(bufferSize, audio.size - index)
+        //     audioTrack.write(
+        //         audio,
+        //         index,
+        //         buffer,
+        //         AudioTrack.WRITE_BLOCKING
+        //     )
+        //     index += bufferSize
+        // }
     }
 
     override fun onDestroy() {
@@ -114,7 +106,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "ORTSuperResolution"
-        private const val SAMPLE_RATE = 44100
+        private const val SAMPLE_RATE = 22050
         private const val FORMAT = AudioFormat.ENCODING_PCM_FLOAT
         private const val CHANNEL = AudioFormat.CHANNEL_OUT_MONO
     }
