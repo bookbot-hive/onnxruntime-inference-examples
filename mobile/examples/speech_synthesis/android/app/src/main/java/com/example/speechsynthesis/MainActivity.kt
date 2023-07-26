@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
 
         inferenceButton?.setOnClickListener {
             try {
-                performInference(lightspeech, mbmelgan)
+                performInference(vits)
                 Toast.makeText(baseContext, "Inference Successful!", Toast.LENGTH_SHORT)
                     .show()
             } catch (e: Exception) {
@@ -45,13 +45,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun performInference(lightspeechSession: OrtSession, mbmelganSession: OrtSession) {
+    private fun performInference(vitsSession: OrtSession) {
         val start = System.nanoTime()
 
         val vits = VITS()
 
         // infer; LightSpeech returns 3 outputs: (mel, duration, pitch)
-        val vitsResults = vits.infer(ortEnv, lightspeechSession)
+        val vitsResults = vits.infer(ortEnv, vitsSession)
         // NOTE: FastSpeech2 returns >3 outputs!
 
         // NOTE: this is durations for visemes!
