@@ -17,7 +17,7 @@ internal class Piper(
     fun infer(ortEnv: OrtEnvironment, ortSession: OrtSession): PiperResult {
         val result: PiperResult
 
-        val input = longArrayOf(0, 64, 0, 156, 0, 102, 0, 62, 0, 61, 0, 16, 0, 102, 0, 68, 0, 16, 0, 156, 0, 76, 0, 158, 0, 61, 0, 138, 0, 55, 0, 5, 0)
+        val input = longArrayOf(1, 0, 34, 0, 120, 0, 74, 0, 32, 0, 31, 0, 3, 0, 74, 0, 38, 0, 3, 0, 120, 0, 54, 0, 122, 0, 31, 0, 102, 0, 25, 0, 4, 0, 2)
         val inputLength = longArrayOf(input.size.toLong())
         val scales = floatArrayOf(0.667F, 1.0F, 0.8F)
 
