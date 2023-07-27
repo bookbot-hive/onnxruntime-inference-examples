@@ -30,8 +30,8 @@ class MainActivity : AppCompatActivity() {
         resultText = findViewById(R.id.result_text)
 
         // initialize sessions / load models
-        val modelFile = File(filesDir, "vits.onnx")
-        assets.open("vits.onnx").use { input ->
+        val modelFile = File(filesDir, "en_US-lessac-medium.onnx")
+        assets.open("en_US-lessac-medium.onnx").use { input ->
             modelFile.outputStream().use { output ->
                 input.copyTo(output, 1024)
             }
@@ -54,26 +54,26 @@ class MainActivity : AppCompatActivity() {
     private fun performInference(vitsSession: OrtSession) {
         val start = System.nanoTime()
 
-        val vits = VITS()
+        val vits = Piper()
 
         // infer; LightSpeech returns 3 outputs: (mel, duration, pitch)
         val vitsResults = vits.infer(ortEnv, vitsSession)
         // NOTE: FastSpeech2 returns >3 outputs!
 
         // NOTE: this is durations for visemes!
-        val durations = vitsResults.durations
+//        val durations = vitsResults.durations
 
-         var durationString = ""
-        for (i in durations) {
-            durationString += i
-            durationString += " "
-        }
+        var durationString = ""
+//        for (i in durations) {
+//            durationString += i
+//            durationString += " "
+//        }
 
         val inferenceTime = ((System.nanoTime() - start) / 1_000_000).toString()
-        val outputText = "Inference time: $inferenceTime ms\nDurations: $durationString"
+        val outputText = "Inference time: $inferenceTime ms"//\nDurations: $durationString"
         resultText?.setText(outputText)
 
-        val audio = vitsResults.audio[0][0]
+        val audio = vitsResults.audio[0][0][0]
 
         val bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL, FORMAT)
         val audioTrack = AudioTrack(
