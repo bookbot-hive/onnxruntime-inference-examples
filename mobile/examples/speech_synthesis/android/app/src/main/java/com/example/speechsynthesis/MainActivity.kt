@@ -30,8 +30,8 @@ class MainActivity : AppCompatActivity() {
         resultText = findViewById(R.id.result_text)
 
         // initialize sessions / load models
-        val modelFile = File(filesDir, "en_US-lessac-medium.onnx")
-        assets.open("en_US-lessac-medium.onnx").use { input ->
+        val modelFile = File(filesDir, "id-ID-Althaf-piper-optimized.onnx")
+        assets.open("id-ID-Althaf-piper-optimized.onnx").use { input ->
             modelFile.outputStream().use { output ->
                 input.copyTo(output, 1024)
             }
@@ -61,19 +61,19 @@ class MainActivity : AppCompatActivity() {
         // NOTE: FastSpeech2 returns >3 outputs!
 
         // NOTE: this is durations for visemes!
-//        val durations = vitsResults.durations
+        val durations = vitsResults.durations
 
         var durationString = ""
-//        for (i in durations) {
-//            durationString += i
-//            durationString += " "
-//        }
+        for (i in durations) {
+            durationString += i
+            durationString += " "
+        }
 
         val inferenceTime = ((System.nanoTime() - start) / 1_000_000).toString()
-        val outputText = "Inference time: $inferenceTime ms"//\nDurations: $durationString"
+        val outputText = "Inference time: $inferenceTime ms\nDurations: $durationString"
         resultText?.setText(outputText)
 
-        val audio = vitsResults.audio[0][0][0]
+        val audio = vitsResults.audio[0][0]
 
         val bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL, FORMAT)
         val audioTrack = AudioTrack(
@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "ORTSuperResolution"
-        private const val SAMPLE_RATE = 22050
+        private const val SAMPLE_RATE = 44100
         private const val FORMAT = AudioFormat.ENCODING_PCM_FLOAT
         private const val CHANNEL = AudioFormat.CHANNEL_OUT_MONO
     }
